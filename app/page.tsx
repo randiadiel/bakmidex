@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Modal from "./components/Modal";
+import { AnimatePresence } from "framer-motion";
 
 type NoodleStatus = "Halal" | "Non-Halal";
 
@@ -11,47 +13,51 @@ interface NoodleShop {
   style: string;
   hours: string;
   mapLink: string;
+  history: string;
+  gallery: string[];
 }
 
+const placeholderHistory = "This legendary noodle house has been serving the community for over 40 years. Starting from a small cart, it has become a local institution, renowned for its secret family recipe passed down through three generations. The noodles are still handmade daily, ensuring the perfect texture and flavor that regulars have come to love.";
+
 const NOODLE_SHOPS: NoodleShop[] = [
-  { name: "Bakmi Abadi (Angke)", address: "Jl. Tubagus Angke No. 89, Angke, Jakarta Barat", status: "Non-Halal", style: "Mie Karet, Lomie", hours: "Mon-Sun: 09:00 - 22:00", mapLink: "#" },
-  { name: "Bakmi Ace (Pademangan)", address: "Jl. Rajawali Selatan XII No. 24, Gn. Sahari Utara, Sawah Besar, Jakarta Pusat", status: "Non-Halal", style: "Kalimantan Style", hours: "Tue-Sun: 07:00 - 18:30 (Mon Closed)", mapLink: "#" },
-  { name: "Bakmi Acang (Grogol)", address: "Jl. Dr. Susilo 3, Grogol, Jakarta Barat", status: "Halal", style: "Ayam Kampung", hours: "Mon-Sun: 10:00 - 22:00", mapLink: "#" },
-  { name: "Bakmi Acing (Grogol)", address: "Jl. Muwardi 1 No. 17, Grogol, Jakarta Barat", status: "Halal", style: "Ayam Kampung", hours: "Daily (Hours vary)", mapLink: "#" },
-  { name: "Bakmi Agoan (Puri)", address: "Ruko Pasar Puri Indah, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "Mie Alot (Gummy Noodle)", hours: "Mon-Sun: 07:00 - 21:00", mapLink: "#" },
-  { name: "Bakmi Akong (Muara Karang)", address: "Jl. Pluit Karang Indah Timur Blok B8 Timur No. 102, Muara Karang, Jakarta Utara", status: "Non-Halal", style: "Mie Campur", hours: "Mon, Wed-Sun: 06:00 - 15:00 (Tue Closed)", mapLink: "#" },
-  { name: "Bakmi Alim Pejagalan (Muara Karang)", address: "Jl. Pluit Karang Sari XV Blok D7 Timur No. 103, Muara Karang, Jakarta Utara", status: "Halal", style: "Ayam Pangsit", hours: "Mon-Sun: 06:30 - 20:00", mapLink: "#" },
-  { name: "Bakmi Aliang Gg. 14 (Pademangan)", address: "Jl. Pademangan II Gang 14 No. 26, Pademangan Timur, Jakarta Utara", status: "Non-Halal", style: "Traditional Chinese-Indonesian", hours: "Tue-Sun: 06:00 - 17:00 (Mon Closed)", mapLink: "#" },
-  { name: "Bakmi Alip (Sawah Besar)", address: "Jl. Sukarjo Wiryopranoto (Sawah Besar)", status: "Halal", style: "Ayam Kampung & Jamur", hours: "Daily: 06:00 - 15:00", mapLink: "#" },
-  { name: "Bakmi Alok (Green Ville)", address: "Jl. Mangga II B No. 38, Green Ville, Jakarta Barat", status: "Halal", style: "Ayam Kampung", hours: "Tue-Sun: 07:00 - 15:00 (Mon Closed)", mapLink: "#" },
-  { name: "Bakmi Aloi (Green Ville)", address: "Jl. Mangga II Blok B No. 37, Green Ville, Jakarta Barat", status: "Non-Halal", style: "Palembang Style", hours: "Mon-Sun: 06:00 - 21:30", mapLink: "#" },
-  { name: "Bakmi Asoi (Puri)", address: "Pasar Puri Indah, Jl. Puri Indah Raya Blok I No. 43, Puri, Jakarta Barat", status: "Non-Halal", style: "Ayam Kampung & Babi Cincang", hours: "Mon-Sun: 06:00 - 13:00", mapLink: "#" },
-  { name: "Bakmi Asiu (Kelapa Gading)", address: "Jl. Kelapa Kopyor Raya Blok Q1 No. 10, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Mie Karet, 6 Toppings", hours: "Daily: 06:00 - 16:30", mapLink: "#" },
-  { name: "Bakmi Asui (Tanjung Duren)", address: "Jl. Tanjung Duren Utara IIIA No. 337B, Grogol petamburan, Jakarta Barat", status: "Halal", style: "Mie Karet Ayam Kampung", hours: "Tue-Sun: 06:00 - 13:00 (Mon Closed)", mapLink: "#" },
-  { name: "Bakmi Asuk (Sunter)", address: "Jl. Danau Sunter Utara No. 59 Blok R, Sunter Agung, Jakarta Utara", status: "Halal", style: "Mie Karet Ayam Kampung", hours: "Mon-Sun: 07:00 - 18:00", mapLink: "#" },
-  { name: "Bakmi Atek Siantar (Puri)", address: "Jl. Puri Kembangan No. 1, Puri, Jakarta Barat", status: "Non-Halal", style: "Mie Keriting Siantar Style", hours: "Daily: 06:00 - 16:00", mapLink: "#" },
-  { name: "Bakmi Ationg (Sunrise Garden)", address: "Komplek Sunrise Garden, Jl. Surya Asih I No. 10, Kebon Jeruk, Jakarta Barat", status: "Halal", style: "Mie Alot Ayam", hours: "Mon-Sun: 06:00 - 18:00", mapLink: "#" },
-  { name: "Bakmi Baji Pamai (Kelapa Gading)", address: "Jl. Boulevard Raya Blok FV1 No. 29-31, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Makassar Style", hours: "Daily (Hours vary)", mapLink: "#" },
-  { name: "Bakmi Belawan Amin (Jelambar)", address: "Jl. Seni Budaya Raya No. 2, Jelambar, Jakarta Barat", status: "Non-Halal", style: "Medan Style", hours: "Mon-Sun: 06:00 - 19:30", mapLink: "#" },
-  { name: "Bakmi Bulon Singkawang (Jelambar)", address: "Jl. Jelambar Baru Raya No. 33, Jelambar, Jakarta Barat", status: "Non-Halal", style: "Singkawang Style", hours: "Mon-Sun: 07:00 - 17:00", mapLink: "#" },
-  { name: "Bakmi Camat (Tan) (Mangga Besar)", address: "Jl. Mangga Besar IV No. 4E, Mangga Besar, Jakarta Barat", status: "Non-Halal", style: "Traditional Chinese-Indonesian", hours: "Tue-Sun: 06:00 - 14:00 (Mon Closed)", mapLink: "#" },
-  { name: "Bakmi Cong Sim (Mangga Besar)", address: "Jl. Raya Mangga Besar No. 2J, Maphar, Taman Sari, Jakarta Barat", status: "Non-Halal", style: "Medan Style", hours: "Mon-Sun: 10:00 - 23:00", mapLink: "#" },
-  { name: "Bakmi Copin (Kelapa Gading)", address: "Jl. Kelapa Hybrida Blok RA 3 No. 5, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Legendary Pork Noodle", hours: "Daily: 07:00 - 22:00", mapLink: "#" },
-  { name: "Bakmi Dina (Puri)", address: "Pasar Puri Indah, Blok K No. 5B, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "Traditional Market Stall", hours: "Mon-Sun: 05:30 - 13:00", mapLink: "#" },
-  { name: "Bakmi Erni (Kelapa Gading)", address: "Jl. Boulevard Raya Blok FY 1 No. 15, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Traditional Chinese-Indonesian", hours: "Daily (Hours vary)", mapLink: "#" },
-  { name: "Bakmi GM (Gajah Mada)", address: "Jl. Gajah Mada No. 92, Krukut, Taman Sari, Jakarta Barat", status: "Halal", style: "Iconic Jakarta Chain", hours: "Mon-Sun: 09:00 - 21:30", mapLink: "#" },
-  { name: "Bakmi Gang Mangga (Glodok)", address: "Jl. Kemurnian IV Gang Mangga No. 38B, Glodok, Jakarta Barat", status: "Non-Halal", style: "Late-Night Noodle", hours: "Daily: 12:00 PM - 03:00 AM", mapLink: "#" },
-  { name: "Bakmi Kah Seng (Tomang)", address: "Jl. Kemuning No. 16, Tomang, Jakarta Barat", status: "Non-Halal", style: "Mie Karet", hours: "Mon-Sun: 07:00 - 14:00", mapLink: "#" },
-  { name: "Bakmi Karet Krekot (Pasar Baru)", address: "Jl. H. Samanhudi No. 6, Pasar Baru, Sawah Besar, Jakarta Pusat", status: "Halal", style: "Mie Karet", hours: "Mon-Sun: 06:00 - 13:00", mapLink: "#" },
-  { name: "Bakmi Karet Planet (Puri)", address: "Pasar Puri Indah Blok I No. 32, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "Mie Karet", hours: "Mon-Sun: 06:00 - 16:00", mapLink: "#" },
-  { name: "Bakmi Khek 63 (Muara Karang)", address: "Jl. Muara Karang Raya Blok B7 Utara No. 115, Muara Karang, Jakarta Utara", status: "Non-Halal", style: "Hakka Style", hours: "Mon-Sun: 06:00 - 15:00", mapLink: "#" },
-  { name: "Bakmi Kribo (Taman Ratu)", address: "Taman Ratu, Jakarta Barat", status: "Non-Halal", style: "Mee Pok, Special Toppings", hours: "Daily (Hours vary)", mapLink: "#" },
-  { name: "Bakmi Ling-ling (Puri Indah)", address: "Ruko Pasar Puri Indah, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "5-Rasa Topping", hours: "Daily (Hours vary)", mapLink: "#" },
-  { name: "Bakmi Lungkee (Hayam Wuruk)", address: "Jl. Hayam Wuruk No. 68, Maphar, Taman Sari, Jakarta Barat", status: "Non-Halal", style: "Mie Kecil/Lebar", hours: "Mon-Sun: 18:00 - 02:00", mapLink: "#" },
-  { name: "Bakmi Orpa (Kota)", address: "Jl. Malaka II No. 25, Kota, Jakarta Barat", status: "Non-Halal", style: "Eggy Noodle, Tahu Bakso", hours: "Mon-Sun: 06:30 - 14:30", mapLink: "#" },
-  { name: "Bakmi Toko Tiga (Menteng)", address: "Jl. KH Wahid Hasyim No. 63A, Menteng, Jakarta Pusat", status: "Halal", style: "Indonesian-Chinese Cuisine", hours: "Mon-Sun: 09:00 - 21:30", mapLink: "#" },
-  { name: "DEMIE Bakmie (Kemang)", address: "Como Park, Jl. Kemang Timur No. 998, Bangka, Jakarta Selatan", status: "Halal", style: "Modern Noodle Bar", hours: "Sun-Thur: 08:00 - 21:00, Fri-Sat: 08:00 - late", mapLink: "#" },
-  { name: "Mie Encim (Sawah Besar)", address: "Jl. Kartini Raya No. 22A, Sawah Besar, Jakarta Pusat", status: "Non-Halal", style: "Legendary Ayam Kampung", hours: "Tue-Sun: 05:30 - 14:00 (Mon Closed)", mapLink: "#" },
+  { name: "Bakmi Abadi (Angke)", address: "Jl. Tubagus Angke No. 89, Angke, Jakarta Barat", status: "Non-Halal", style: "Mie Karet, Lomie", hours: "Mon-Sun: 09:00 - 22:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Ace (Pademangan)", address: "Jl. Rajawali Selatan XII No. 24, Gn. Sahari Utara, Sawah Besar, Jakarta Pusat", status: "Non-Halal", style: "Kalimantan Style", hours: "Tue-Sun: 07:00 - 18:30 (Mon Closed)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Acang (Grogol)", address: "Jl. Dr. Susilo 3, Grogol, Jakarta Barat", status: "Halal", style: "Ayam Kampung", hours: "Mon-Sun: 10:00 - 22:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Acing (Grogol)", address: "Jl. Muwardi 1 No. 17, Grogol, Jakarta Barat", status: "Halal", style: "Ayam Kampung", hours: "Daily (Hours vary)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Agoan (Puri)", address: "Ruko Pasar Puri Indah, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "Mie Alot (Gummy Noodle)", hours: "Mon-Sun: 07:00 - 21:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Akong (Muara Karang)", address: "Jl. Pluit Karang Indah Timur Blok B8 Timur No. 102, Muara Karang, Jakarta Utara", status: "Non-Halal", style: "Mie Campur", hours: "Mon, Wed-Sun: 06:00 - 15:00 (Tue Closed)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Alim Pejagalan (Muara Karang)", address: "Jl. Pluit Karang Sari XV Blok D7 Timur No. 103, Muara Karang, Jakarta Utara", status: "Halal", style: "Ayam Pangsit", hours: "Mon-Sun: 06:30 - 20:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Aliang Gg. 14 (Pademangan)", address: "Jl. Pademangan II Gang 14 No. 26, Pademangan Timur, Jakarta Utara", status: "Non-Halal", style: "Traditional Chinese-Indonesian", hours: "Tue-Sun: 06:00 - 17:00 (Mon Closed)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Alip (Sawah Besar)", address: "Jl. Sukarjo Wiryopranoto (Sawah Besar)", status: "Halal", style: "Ayam Kampung & Jamur", hours: "Daily: 06:00 - 15:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Alok (Green Ville)", address: "Jl. Mangga II B No. 38, Green Ville, Jakarta Barat", status: "Halal", style: "Ayam Kampung", hours: "Tue-Sun: 07:00 - 15:00 (Mon Closed)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Aloi (Green Ville)", address: "Jl. Mangga II Blok B No. 37, Green Ville, Jakarta Barat", status: "Non-Halal", style: "Palembang Style", hours: "Mon-Sun: 06:00 - 21:30", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Asoi (Puri)", address: "Pasar Puri Indah, Jl. Puri Indah Raya Blok I No. 43, Puri, Jakarta Barat", status: "Non-Halal", style: "Ayam Kampung & Babi Cincang", hours: "Mon-Sun: 06:00 - 13:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Asiu (Kelapa Gading)", address: "Jl. Kelapa Kopyor Raya Blok Q1 No. 10, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Mie Karet, 6 Toppings", hours: "Daily: 06:00 - 16:30", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Asui (Tanjung Duren)", address: "Jl. Tanjung Duren Utara IIIA No. 337B, Grogol petamburan, Jakarta Barat", status: "Halal", style: "Mie Karet Ayam Kampung", hours: "Tue-Sun: 06:00 - 13:00 (Mon Closed)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Asuk (Sunter)", address: "Jl. Danau Sunter Utara No. 59 Blok R, Sunter Agung, Jakarta Utara", status: "Halal", style: "Mie Karet Ayam Kampung", hours: "Mon-Sun: 07:00 - 18:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Atek Siantar (Puri)", address: "Jl. Puri Kembangan No. 1, Puri, Jakarta Barat", status: "Non-Halal", style: "Mie Keriting Siantar Style", hours: "Daily: 06:00 - 16:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Ationg (Sunrise Garden)", address: "Komplek Sunrise Garden, Jl. Surya Asih I No. 10, Kebon Jeruk, Jakarta Barat", status: "Halal", style: "Mie Alot Ayam", hours: "Mon-Sun: 06:00 - 18:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Baji Pamai (Kelapa Gading)", address: "Jl. Boulevard Raya Blok FV1 No. 29-31, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Makassar Style", hours: "Daily (Hours vary)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Belawan Amin (Jelambar)", address: "Jl. Seni Budaya Raya No. 2, Jelambar, Jakarta Barat", status: "Non-Halal", style: "Medan Style", hours: "Mon-Sun: 06:00 - 19:30", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Bulon Singkawang (Jelambar)", address: "Jl. Jelambar Baru Raya No. 33, Jelambar, Jakarta Barat", status: "Non-Halal", style: "Singkawang Style", hours: "Mon-Sun: 07:00 - 17:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Camat (Tan) (Mangga Besar)", address: "Jl. Mangga Besar IV No. 4E, Mangga Besar, Jakarta Barat", status: "Non-Halal", style: "Traditional Chinese-Indonesian", hours: "Tue-Sun: 06:00 - 14:00 (Mon Closed)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Cong Sim (Mangga Besar)", address: "Jl. Raya Mangga Besar No. 2J, Maphar, Taman Sari, Jakarta Barat", status: "Non-Halal", style: "Medan Style", hours: "Mon-Sun: 10:00 - 23:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Copin (Kelapa Gading)", address: "Jl. Kelapa Hybrida Blok RA 3 No. 5, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Legendary Pork Noodle", hours: "Daily: 07:00 - 22:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Dina (Puri)", address: "Pasar Puri Indah, Blok K No. 5B, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "Traditional Market Stall", hours: "Mon-Sun: 05:30 - 13:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Erni (Kelapa Gading)", address: "Jl. Boulevard Raya Blok FY 1 No. 15, Kelapa Gading, Jakarta Utara", status: "Non-Halal", style: "Traditional Chinese-Indonesian", hours: "Daily (Hours vary)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi GM (Gajah Mada)", address: "Jl. Gajah Mada No. 92, Krukut, Taman Sari, Jakarta Barat", status: "Halal", style: "Iconic Jakarta Chain", hours: "Mon-Sun: 09:00 - 21:30", mapLink: "#", history: "Founded in 1959, Bakmi GM is one of Jakarta's most iconic and beloved noodle chains. It started from a humble stall in Gajah Mada and has grown into a household name, famous for its consistent quality and signature Pangsit Goreng (fried wontons). The special recipe has been passed down through generations, making it a nostalgic favorite for many Jakartans.", gallery: ["https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/85353fbe-6343-42e5-8a68-61833a6f059e.jpg", "https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/15d5f20a-42c2-480c-9d1d-1f630592a348.jpg", "https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/11181f0b-1e14-4a84-a178-553585149303.jpg"] },
+  { name: "Bakmi Gang Mangga (Glodok)", address: "Jl. Kemurnian IV Gang Mangga No. 38B, Glodok, Jakarta Barat", status: "Non-Halal", style: "Late-Night Noodle", hours: "Daily: 12:00 PM - 03:00 AM", mapLink: "#", history: "A legendary name in Jakarta's late-night culinary scene, Bakmi Gang Mangga operates out of a small alley in the historic Glodok (Chinatown) area. For decades, it has served its signature bakmi, attracting night owls and culinary adventurers. Its enduring popularity is a testament to its unchanging, classic flavor profile, a true taste of old Jakarta.", gallery: ["https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/48a5a54c-7c0b-4589-8968-3d165e69b821.jpg", "https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/4cf39688-42a3-455b-8664-4416a416b2d1.jpg"] },
+  { name: "Bakmi Kah Seng (Tomang)", address: "Jl. Kemuning No. 16, Tomang, Jakarta Barat", status: "Non-Halal", style: "Mie Karet", hours: "Mon-Sun: 07:00 - 14:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Karet Krekot (Pasar Baru)", address: "Jl. H. Samanhudi No. 6, Pasar Baru, Sawah Besar, Jakarta Pusat", status: "Halal", style: "Mie Karet", hours: "Mon-Sun: 06:00 - 13:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Karet Planet (Puri)", address: "Pasar Puri Indah Blok I No. 32, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "Mie Karet", hours: "Mon-Sun: 06:00 - 16:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Khek 63 (Muara Karang)", address: "Jl. Muara Karang Raya Blok B7 Utara No. 115, Muara Karang, Jakarta Utara", status: "Non-Halal", style: "Hakka Style", hours: "Mon-Sun: 06:00 - 15:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Kribo (Taman Ratu)", address: "Taman Ratu, Jakarta Barat", status: "Non-Halal", style: "Mee Pok, Special Toppings", hours: "Daily (Hours vary)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Ling-ling (Puri Indah)", address: "Ruko Pasar Puri Indah, Jl. Puri Indah Raya, Puri, Jakarta Barat", status: "Non-Halal", style: "5-Rasa Topping", hours: "Daily (Hours vary)", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Lungkee (Hayam Wuruk)", address: "Jl. Hayam Wuruk No. 68, Maphar, Taman Sari, Jakarta Barat", status: "Non-Halal", style: "Mie Kecil/Lebar", hours: "Mon-Sun: 18:00 - 02:00", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "Bakmi Orpa (Kota)", address: "Jl. Malaka II No. 25, Kota, Jakarta Barat", status: "Non-Halal", style: "Eggy Noodle, Tahu Bakso", hours: "Mon-Sun: 06:30 - 14:30", mapLink: "#", history: "Bakmi Orpa is a true hidden gem, cherished by those in the know for its exceptionally springy, egg-rich noodles. The shop has been a fixture in the old city for decades, maintaining a loyal following through its commitment to quality and tradition. The addition of their signature 'Tahu Bakso Goreng' (fried tofu meatball) makes for an unforgettable meal.", gallery: ["https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/8e0b6235-9831-411a-9745-13f5920ab03b.jpg"] },
+  { name: "Bakmi Toko Tiga (Menteng)", address: "Jl. KH Wahid Hasyim No. 63A, Menteng, Jakarta Pusat", status: "Halal", style: "Indonesian-Chinese Cuisine", hours: "Mon-Sun: 09:00 - 21:30", mapLink: "#", history: placeholderHistory, gallery: [] },
+  { name: "DEMIE Bakmie (Kemang)", address: "Como Park, Jl. Kemang Timur No. 998, Bangka, Jakarta Selatan", status: "Halal", style: "Modern Noodle Bar", hours: "Sun-Thur: 08:00 - 21:00, Fri-Sat: 08:00 - late", mapLink: "#", history: "A relative newcomer, DEMIE has quickly made a name for itself by reimagining the classic bakmi for a modern palate. Located in the trendy Kemang area, it offers a chic, minimalist take on the noodle bar experience. Their focus on premium ingredients and innovative flavor combinations has attracted a new generation of bakmi enthusiasts.", gallery: ["https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/e6f2129e-63f2-45e6-9e12-24bf53b9f36f.jpg", "https://storage.googleapis.com/gemini-prod-us-west1-d85c5339f40c/images/303530e3-2e38-4e8c-a55e-2e4a428e2365.jpg"] },
+  { name: "Mie Encim (Sawah Besar)", address: "Jl. Kartini Raya No. 22A, Sawah Besar, Jakarta Pusat", status: "Non-Halal", style: "Legendary Ayam Kampung", hours: "Tue-Sun: 05:30 - 14:00 (Mon Closed)", mapLink: "#", history: placeholderHistory, gallery: [] },
 ];
 
 function getAreaFromName(name: string): string {
@@ -59,7 +65,7 @@ function getAreaFromName(name: string): string {
   return match ? match[1].toLowerCase() : "";
 }
 
-function NoodleCard({ shop }: { shop: NoodleShop }) {
+function NoodleCard({ shop, onClick }: { shop: NoodleShop; onClick: () => void }) {
   const [enterActive, setEnterActive] = useState(false);
 
   useEffect(() => {
@@ -76,6 +82,7 @@ function NoodleCard({ shop }: { shop: NoodleShop }) {
       data-area={getAreaFromName(shop.name)}
       data-style={shop.style.toLowerCase()}
       data-status={shop.status}
+      onClick={onClick}
     >
       <div className="p-6">
         <div className="flex justify-between items-start mb-2">
@@ -92,14 +99,11 @@ function NoodleCard({ shop }: { shop: NoodleShop }) {
           </p>
         </div>
         <div className="mt-4">
-          <a
-            href={shop.mapLink}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
             className="inline-block w-full text-center bg-gray-800 text-white font-semibold py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors duration-300"
           >
-            View on Google Maps
-          </a>
+            View Details
+          </button>
         </div>
       </div>
     </div>
@@ -109,6 +113,15 @@ function NoodleCard({ shop }: { shop: NoodleShop }) {
 export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | NoodleStatus>("all");
+  const [selectedShop, setSelectedShop] = useState<NoodleShop | null>(null);
+
+  const handleOpenModal = (shop: NoodleShop) => {
+    setSelectedShop(shop);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedShop(null);
+  };
 
   const filteredShops = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
@@ -257,7 +270,7 @@ export default function Home() {
           {/* Noodle Shop List */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredShops.map((shop) => (
-              <NoodleCard key={shop.name} shop={shop} />
+              <NoodleCard key={shop.name} shop={shop} onClick={() => handleOpenModal(shop)} />
             ))}
           </div>
           <p className={`text-center text-gray-500 mt-8 ${filteredShops.length === 0 ? "" : "hidden"}`}>
@@ -265,6 +278,11 @@ export default function Home() {
           </p>
         </section>
       </main>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {selectedShop && <Modal shop={selectedShop} onClose={handleCloseModal} />}
+      </AnimatePresence>
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white py-8">
